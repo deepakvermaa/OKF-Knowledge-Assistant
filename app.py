@@ -22,6 +22,10 @@ def load_gemini_client():
     api_key = os.getenv("GEMINI_API_KEY")
 
     if not api_key:
+        try:
+            api_key = st.secrets["GEMINI_API_KEY"]
+        except Exception:
+            raise ValueError("GEMINI_API_KEY not found.")
         raise ValueError("GEMINI_API_KEY not found.")
 
     client = genai.Client(
