@@ -1,36 +1,41 @@
-OKF Knowledge Assistant
-An AI-powered knowledge assistant that converts source PDF documents into structured Open Knowledge Format (OKF) knowledge files and uses that structured knowledge to answer user questions with Google Gemini.
-Live Demo
-🌐 OKF Knowledge Assistant
-Overview
-The project is designed around a simple knowledge workflow:
-Source PDFs
+# OKF Knowledge Assistant
+
+An AI-powered knowledge assistant that converts PDF documents into structured Open Knowledge Format (OKF) knowledge and uses Google Gemini to answer questions from that knowledge.
+
+## Live Demo
+
+🌐 [OKF Knowledge Assistant](https://okf-knowledge-assistant.streamlit.app/)
+
+## How It Works
+
+```text
+Source PDF
     ↓
 PyPDFLoader
     ↓
-Extract structured information
+Extract text and metadata
     ↓
-OKF Markdown + YAML frontmatter
+Convert to OKF Markdown
     ↓
-Knowledge Catalog
+Build Knowledge Catalog
     ↓
-Concept Retrieval
+Retrieve relevant OKF concept
     ↓
-Selected OKF knowledge
+Load full knowledge
     ↓
 Google Gemini
     ↓
-Final Answer
-The PDF is treated as the original source document. The generated .md files are the structured knowledge consumed by the application.
+Answer
+
+The PDF is the original source document.
+The .md files inside the okf folder are the structured knowledge used by the application.
 Why OKF?
-A PDF is useful as a source document, but it is not an ideal format for a knowledge system to inspect, organize, connect, and version at the concept level.
-The OKF layer separates:
-- Metadata — type, title, description, tags, status, version, source
-- Knowledge content — the actual Markdown body
-- Relationships — links between related concepts
-This makes the knowledge easier to read, update, search, version-control, and use by other applications.
-OKF specification:
-https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md
+PDF is useful as a source document, but it is not designed to represent knowledge in a simple machine-readable structure.
+OKF separates:
+- Metadata such as type, title, description, tags, version, status, and source
+- Knowledge content in Markdown
+- Relationships between related concepts
+This makes the knowledge easier to organize, read, update, and consume by applications.
 Project Structure
 OKF-Knowledge-Assistant/
 │
@@ -61,101 +66,110 @@ OKF-Knowledge-Assistant/
 ├── .env.example
 ├── .gitignore
 └── README.md
+
 Main Components
 convert_to_okf.py
-Reads the source PDFs using LangChain's PyPDFLoader, extracts the structured fields, and creates OKF-style Markdown files with YAML frontmatter.
+Reads the source PDF files using LangChain's PyPDFLoader and converts their structured information into Markdown files with YAML frontmatter.
 Example:
 PDF
  ↓
 PyPDFLoader
  ↓
-TYPE / TITLE / DEPARTMENT / VERSION / TAGS / STATUS
+Metadata + Content
  ↓
-Markdown + YAML
+OKF Markdown
+
 catalog.py
-Reads only the YAML frontmatter from the OKF files and creates a small catalog containing information such as:
-title
-type
-description
-tags
-status
-resource
-file path
-The catalog helps the application decide which knowledge concept is relevant without loading every full document.
+Reads the YAML frontmatter from the OKF files and creates a small knowledge catalog.
+The catalog contains information such as:
+- Title
+- Type
+- Description
+- Tags
+- Status
+- Source
+- File path
 retrieve.py
-Takes the user's question and compares its important words with the concept title, description, and tags.
-It then selects the best matching OKF concept and loads the full Markdown file.
+Takes the user's question and compares it with the titles, descriptions, and tags in the catalog.
+It selects the most relevant OKF concept and loads the complete Markdown file.
 generator.py
-Sends the selected OKF knowledge and the user's question to Google Gemini and generates the final response.
+Sends the selected OKF knowledge and the user's question to Google Gemini and generates the final answer.
 app.py
-Provides the Streamlit interface, chat history, example questions, answer display, and a Knowledge used section showing the selected concept's metadata.
+Provides the Streamlit interface, chat history, example questions, answers, and the "Knowledge used" section.
 Example
-User question:
+User Question
 How many days can I work from home?
 
-The system identifies:
+Retrieved Knowledge
 Title: Work From Home Policy
 Type: Policy
 Status: stable
-Tags: WFH, remote work, attendance, HR
-It then loads the corresponding OKF Markdown file and sends that knowledge to Gemini for the final answer.
+Tags: WFH, remote-work, attendance, HR
+
+The application then loads the complete work_from_home_policy.md file and sends that knowledge to Gemini.
+Answer
+Eligible employees may work from home for up to 2 days per week,
+subject to manager approval.
+
 Features
-- PDF to structured OKF conversion
-- YAML frontmatter for knowledge metadata
-- Markdown-based knowledge representation
-- Simple catalog generation
-- Metadata-based concept retrieval
-- Support for document versions and lifecycle status
-- Related concept links
-- Google Gemini answer generation
-- Streamlit web interface
-- Local .env support
-- Streamlit Cloud Secrets support
-Run Locally
+- PDF to OKF conversion
+- YAML frontmatter
+- Markdown-based knowledge
+- Knowledge catalog
+- Metadata-based retrieval
+- Document version information
+- Knowledge relationships
+- Google Gemini integration
+- Streamlit interface
+- Source information display
+- Streamlit Cloud deployment
+Running Locally
 1. Clone the repository
 git clone <your-repository-url>
 cd OKF-Knowledge-Assistant
+
 2. Install dependencies
 pip install -r requirements.txt
+
 3. Create .env
 Create a .env file in the project root:
 GEMINI_API_KEY=your_gemini_api_key
+
 Do not commit .env to GitHub.
 4. Convert PDFs to OKF
 python convert_to_okf.py
-This creates the Markdown knowledge files inside the okf/ directory.
-5. Build and check the catalog
+
+5. Build the catalog
 python catalog.py
-6. Run the application
+
+6. Start the application
 streamlit run app.py
+
 Deployment
-The application is deployed using Streamlit Community Cloud.
-For deployment, the Gemini API key should be added through Streamlit Secrets instead of committing it to the repository.
-Example secret:
-GEMINI_API_KEY = "your_gemini_api_key"
+The application is deployed on Streamlit Community Cloud.
+The Gemini API key is stored using Streamlit Secrets and is not included in the GitHub repository.
 Security
-- API keys are stored outside the repository.
-- .env is excluded through .gitignore.
-- .env.example contains only the variable name and no secret value.
-Current Scope and Limitations
-This version intentionally keeps retrieval simple and explainable.
-Current limitations include:
-- The PDF converter assumes the source documents contain clearly structured fields.
-- Complex PDF tables, scanned documents, and image-heavy documents may require a stronger document-processing pipeline.
-- Concept retrieval currently uses metadata and keyword matching.
-- The current application does not use a vector database or FAISS.
-- The LLM is used for final answer generation after concept retrieval.
+The API key is stored outside the Git repository.
+.env is included in .gitignore.
+.env.example contains only:
+GEMINI_API_KEY=
+
+Current Limitations
+This version keeps the retrieval system simple and explainable.
+- The PDF converter expects structured information in the source documents.
+- Complex tables, scanned PDFs, and image-heavy PDFs need a more advanced document-processing pipeline.
+- Retrieval currently uses metadata and keyword matching.
+- The application does not currently use FAISS or a vector database.
+- Gemini is responsible for generating the final natural-language answer.
 Future Improvements
-Possible next improvements include:
-- Better PDF table and image extraction
+- Better extraction of tables and images from PDFs
 - OCR for scanned documents
-- More advanced concept retrieval for larger knowledge bases
-- Better relationship traversal between concepts
+- More advanced semantic retrieval for large knowledge bases
+- Better concept relationship traversal
+- Source citations in answers
 - Automated knowledge validation
-- Source-level citations in answers
-- Version-aware concept selection
 - Enterprise authentication and access control
-Technologies Used
+Technologies
 - Python
 - Streamlit
 - LangChain PyPDFLoader
@@ -165,4 +179,4 @@ Technologies Used
 - python-dotenv
 Author
 Deepak Verma
-Built as a practical Generative AI / knowledge-management project.
+Built as a practical Generative AI and knowledge-management project.
