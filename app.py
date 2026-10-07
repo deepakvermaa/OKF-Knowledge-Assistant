@@ -51,18 +51,30 @@ st.write(
 with st.sidebar:
     st.header("Knowledge Base")
 
-    st.write("12 policy documents")
-    st.write("Embeddings: Sentence Transformers")
-    st.write("Search: FAISS")
-    st.write("Answer generation: Gemini")
+    st.subheader("Available Policies")
 
-    st.subheader("Example questions")
+    st.write("✓ Employee Leave Policy")
+    st.write("✓ Work From Home Policy")
+    st.write("✓ Employee Attendance Policy")
+    st.write("✓ Business Travel Policy")
+    st.write("✓ Travel Reimbursement Policy")
+    st.write("✓ Learning and Development Policy")
+    st.write("✓ Performance Review Policy")
+    st.write("✓ Employee Benefits Policy")
+    st.write("✓ Employee Code of Conduct")
+    st.write("✓ Remote Work Security Policy")
+    st.write("✓ Employee Expense Policy")
+    st.write("✓ IT Asset Policy")
 
-    st.write("• How many days of annual leave do employees get?")
-    st.write("• Can I work from home?")
-    st.write("• Can I claim hotel expenses?")
-    st.write("• What are the normal working hours?")
-    st.write("• How do I claim a certification expense?")
+    st.divider()
+
+    st.subheader("Example Questions")
+
+    st.write("What are the normal working hours?")
+    st.write("How many days of annual leave do employees get?")
+    st.write("Can I work from home?")
+    st.write("Can I claim hotel expenses during a business trip?")
+    st.write("How do I claim a certification expense?")
 
 
 for message in st.session_state.messages:
