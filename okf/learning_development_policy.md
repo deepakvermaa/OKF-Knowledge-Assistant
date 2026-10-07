@@ -1,30 +1,39 @@
 ---
 type: Policy
 title: Learning and Development Policy
-description: Company policy for learning and development policy under the Learning department.
-resource: /source_pdfs/learning_development_policy.pdf
+department: Learning and Development
+version: 1.1
 tags:
   - learning
   - training
   - certification
   - skills
-version: "1.0"
+  - course
 status: stable
-sources:
-  - id: source-document
-    resource: /source_pdfs/learning_development_policy.pdf
-    title: Learning and Development Policy
+source: /source_pdfs/learning_development_policy.pdf
 ---
 
-# Learning and Development Policy
-
-1. Employees are encouraged to improve skills relevant to their current role or career development.
-2. Employees may participate in approved internal learning programs.
-3. Certification programs may require manager approval when they involve project time or company-funded
-resources.
-4. Mandatory training should be completed within the communicated deadline.
-5. Employees may discuss learning paths with their manager or learning coordinator.
-6. Training records should be updated in the approved learning platform when required.
-7. Employees are encouraged to apply relevant learning to project work.
-8. Company-funded external courses are subject to approval rules.
-9. Managers may recommend learning based on project requirements and skill gaps.
+Purpose
+This policy supports employee development through relevant training, professional certifications, and
+structured learning activities.
+Training Requests
+Employees may request training related to their current responsibilities or a planned career-development
+path. The request should explain how the training supports the employee's work.
+Certifications
+The company may reimburse approved professional certification costs when the certification is relevant to the
+employee's role or an agreed development plan.
+Approval
+Training and certification requests require manager approval. Additional department or finance approval may
+be required depending on the cost.
+Learning Time
+Employees may use approved learning time during working hours when this has been agreed with their
+manager and does not create an unacceptable business impact.
+External Courses
+External courses should be selected based on relevance, quality, schedule, and cost. Employees should not
+commit company funds before approval.
+Certification Exam
+Employees should obtain approval before registering for a reimbursable certification exam. Reimbursement is
+subject to the applicable company rules.
+Development Plans
+Managers and employees are encouraged to discuss development goals during performance conversations
+and identify practical learning activities.

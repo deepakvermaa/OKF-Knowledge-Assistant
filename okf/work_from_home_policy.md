@@ -1,29 +1,39 @@
 ---
 type: Policy
 title: Work From Home Policy
-description: Company policy for work from home policy under the HR department.
-resource: /source_pdfs/work_from_home_policy.pdf
+department: Human Resources
+version: 1.5
 tags:
   - WFH
   - remote work
+  - home
   - attendance
-  - HR
-version: "1.0"
+  - manager approval
 status: stable
-sources:
-  - id: source-document
-    resource: /source_pdfs/work_from_home_policy.pdf
-    title: Work From Home Policy
+source: /source_pdfs/work_from_home_policy.pdf
 ---
 
-# Work From Home Policy
-
-1. Eligible employees may work from home for up to 2 days per week, subject to manager approval.
-2. Employees must remain available during normal working hours.
-3. Employees must maintain reliable internet access and access to required company systems.
-4. Employees should use company-approved devices and security controls.
-5. Work-from-home requests should be submitted through the approved process before the planned day.
-6. Employees should attend scheduled meetings while working remotely.
-7. Technical or internet issues should be reported to the manager.
-8. Managers may request office presence when business requirements require it.
-9. Working from home does not change the employee's normal responsibilities.
+Purpose
+This policy defines the conditions under which eligible employees may work from home and the
+responsibilities that apply during remote work.
+Eligibility
+Employees who have completed probation may request work from home when their role can be performed
+effectively outside the office. Certain roles that require physical presence may not be eligible.
+Weekly Limit
+Eligible employees may normally work from home for up to 2 days per week. A different arrangement may be
+approved for specific business requirements.
+Approval
+Employees must obtain approval from their reporting manager before working from home. An approved WFH
+request does not automatically apply to future weeks.
+Working Hours
+Employees working from home must follow their normal working schedule unless a different schedule has
+been approved.
+Availability
+Employees must remain reachable through approved communication tools, attend scheduled meetings, and
+respond to work-related requests during working hours.
+Workspace
+Employees are expected to maintain a suitable work area where company information can be handled
+securely and confidential conversations cannot be overheard.
+Office Requirement
+Managers may require employees to attend the office for meetings, collaboration, training, or business
+requirements even when the employee normally uses WFH days.

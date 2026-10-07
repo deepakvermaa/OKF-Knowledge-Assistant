@@ -4,19 +4,18 @@ import streamlit as st
 from dotenv import load_dotenv
 from google import genai
 
+from embedder import load_model
 from retrieve import retrieve_knowledge
 from generator import generate_answer
 
 
 st.set_page_config(
     page_title="OKF Knowledge Assistant",
-    page_icon="📚",
-    layout="centered"
+    page_icon="📚"
 )
 
 
 def load_gemini_client():
-
     load_dotenv()
 
     api_key = os.getenv("GEMINI_API_KEY")
@@ -26,141 +25,56 @@ def load_gemini_client():
             api_key = st.secrets["GEMINI_API_KEY"]
         except Exception:
             raise ValueError("GEMINI_API_KEY not found.")
-        raise ValueError("GEMINI_API_KEY not found.")
 
-    client = genai.Client(
-        api_key=api_key
-    )
-
-    return client
+    return genai.Client(api_key=api_key)
 
 
 client = load_gemini_client()
 
+if "embedding_model" not in st.session_state:
+    st.session_state.embedding_model = load_model()
 
-# Store conversation
+embedding_model = st.session_state.embedding_model
+
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
 
-# --------------------------------------------------
-# Header
-# --------------------------------------------------
-
 st.title("📚 OKF Knowledge Assistant")
 
 st.write(
-    "Ask questions about the structured company knowledge base."
+    "Ask questions about the company policies in the knowledge base."
 )
 
-
-# --------------------------------------------------
-# Sidebar
-# --------------------------------------------------
 
 with st.sidebar:
-
     st.header("Knowledge Base")
 
-    st.write("5 active concepts")
-    st.write("• HR Policies")
-    st.write("• Finance Policies")
-    st.write("• Learning & Development")
+    st.write("12 policy documents")
+    st.write("Embeddings: Sentence Transformers")
+    st.write("Search: FAISS")
+    st.write("Answer generation: Gemini")
 
-    st.divider()
+    st.subheader("Example questions")
 
-    st.write("This assistant uses structured OKF knowledge.")
-    st.write("PDFs are converted into Markdown knowledge files.")
+    st.write("• How many days of annual leave do employees get?")
+    st.write("• Can I work from home?")
+    st.write("• Can I claim hotel expenses?")
+    st.write("• What are the normal working hours?")
+    st.write("• How do I claim a certification expense?")
 
-
-# --------------------------------------------------
-# Example questions
-# --------------------------------------------------
-
-st.subheader("Try an example")
-
-col1, col2 = st.columns(2)
-
-with col1:
-
-    if st.button("Annual leave"):
-
-        st.session_state.example_question = (
-            "How many annual leave days are available?"
-        )
-
-
-with col2:
-
-    if st.button("Work from home"):
-
-        st.session_state.example_question = (
-            "How many days can I work from home?"
-        )
-
-
-col3, col4 = st.columns(2)
-
-with col3:
-
-    if st.button("Travel reimbursement"):
-
-        st.session_state.example_question = (
-            "What is the hotel reimbursement limit?"
-        )
-
-
-with col4:
-
-    if st.button("Attendance"):
-
-        st.session_state.example_question = (
-            "What should an employee do if they cannot attend work?"
-        )
-
-
-# Get example question if a button was clicked
-example_question = st.session_state.get(
-    "example_question",
-    ""
-)
-
-
-# --------------------------------------------------
-# Display previous messages
-# --------------------------------------------------
 
 for message in st.session_state.messages:
 
     with st.chat_message(message["role"]):
-
         st.write(message["content"])
 
 
-# --------------------------------------------------
-# User input
-# --------------------------------------------------
+question = st.chat_input("Ask a question about the policies...")
 
-question = st.chat_input(
-    "Ask a question..."
-)
-
-
-if not question and example_question:
-
-    question = example_question
-
-    st.session_state.example_question = ""
-
-
-# --------------------------------------------------
-# Process question
-# --------------------------------------------------
 
 if question:
-
-    with st.chat_message("user"):
-        st.write(question)
 
     st.session_state.messages.append(
         {
@@ -169,31 +83,25 @@ if question:
         }
     )
 
+    with st.chat_message("user"):
+        st.write(question)
 
-    # Find relevant OKF knowledge
-    result = retrieve_knowledge(question)
-
+    result = retrieve_knowledge(
+        question,
+        embedding_model
+    )
 
     if result is None:
 
-        answer = (
-            "I couldn't find relevant knowledge "
-            "in the knowledge base."
-        )
-
-        concept = None
+        answer = "I couldn't find relevant knowledge for this question."
 
     else:
 
-        concept = result["concept"]
         knowledge = result["knowledge"]
 
-
-        # Build conversation history
         chat_history = ""
 
-        for message in st.session_state.messages[:-1]:
-
+        for message in st.session_state.messages:
             chat_history += (
                 message["role"]
                 + ": "
@@ -201,10 +109,7 @@ if question:
                 + "\n"
             )
 
-
-        # Generate answer
         try:
-
             answer = generate_answer(
                 client,
                 question,
@@ -213,22 +118,13 @@ if question:
             )
 
         except Exception:
-
             answer = (
                 "I found the relevant knowledge, "
-                "but the AI service is temporarily unavailable. "
-                "Please try again."
+                "but the AI service is temporarily unavailable."
             )
 
-
-    # --------------------------------------------------
-    # Display answer
-    # --------------------------------------------------
-
     with st.chat_message("assistant"):
-
         st.write(answer)
-
 
     st.session_state.messages.append(
         {
@@ -237,38 +133,15 @@ if question:
         }
     )
 
-
-    # --------------------------------------------------
-    # Show selected knowledge
-    # --------------------------------------------------
-
-    if concept is not None:
+    if result is not None:
 
         with st.expander("Knowledge used"):
 
-            st.write(
-                "**Title:** "
-                + concept["title"]
-            )
+            concept = result["concept"]
 
-            st.write(
-                "**Type:** "
-                + concept["type"]
-            )
-
-            st.write(
-                "**Status:** "
-                + concept["status"]
-            )
-
-            st.write(
-                "**Tags:** "
-                + ", ".join(concept["tags"])
-            )
-
-            st.write(
-                "**Source:** "
-                + os.path.basename(
-                    concept["resource"]
-                )
-            )
+            st.write("Title:", concept["title"])
+            st.write("Department:", concept["department"])
+            st.write("Version:", concept["version"])
+            st.write("Status:", concept["status"])
+            st.write("Tags:", ", ".join(concept["tags"]))
+            st.write("Source:", concept["source"])

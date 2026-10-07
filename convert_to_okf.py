@@ -24,11 +24,10 @@ def extract_content(text):
     if match:
         return match.group(1).strip()
 
-    return text.strip()
+    return ""
 
 
 def create_okf_file(pdf_path, output_folder):
-
     loader = PyPDFLoader(str(pdf_path))
     pages = loader.load()
 
@@ -46,75 +45,34 @@ def create_okf_file(pdf_path, output_folder):
 
     content = extract_content(full_text)
 
-    # Use the PDF filename as the source
-    source_path = f"/source_pdfs/{pdf_path.name}"
-
-    # Convert tags into a YAML list
     tag_list = []
 
     for tag in tags.split(","):
-        tag = tag.strip()
+        tag_list.append(tag.strip())
 
-        if tag:
-            tag_list.append(tag)
+    output_file = output_folder / f"{pdf_path.stem}.md"
 
-    # Create a simple filename for the OKF concept
-    output_name = pdf_path.stem + ".md"
-
-    output_path = output_folder / output_name
-
-    with open(output_path, "w", encoding="utf-8") as file:
-
+    with open(output_file, "w", encoding="utf-8") as file:
         file.write("---\n")
-
         file.write(f"type: {document_type}\n")
         file.write(f"title: {title}\n")
-
-        description = (
-            f"Company policy for {title.lower()} "
-            f"under the {department} department."
-        )
-
-        file.write(f"description: {description}\n")
-
-        file.write(f"resource: {source_path}\n")
-
+        file.write(f"department: {department}\n")
+        file.write(f"version: {version}\n")
         file.write("tags:\n")
 
         for tag in tag_list:
             file.write(f"  - {tag}\n")
 
-        if version:
-            file.write(f'version: "{version}"\n')
-
-        if status:
-            status_value = status.upper()
-
-            if status_value == "ACTIVE":
-                okf_status = "stable"
-            elif status_value == "SUPERSEDED":
-                okf_status = "deprecated"
-            else:
-                okf_status = "stable"
-
-            file.write(f"status: {okf_status}\n")
-
-        file.write("sources:\n")
-        file.write("  - id: source-document\n")
-        file.write(f"    resource: {source_path}\n")
-        file.write(f"    title: {title}\n")
-
+        file.write(f"status: {status}\n")
+        file.write(f"source: /source_pdfs/{pdf_path.name}\n")
         file.write("---\n\n")
 
-        file.write(f"# {title}\n\n")
         file.write(content)
-        file.write("\n")
 
-    print(f"Created: {output_path}")
+    print(f"Created: {output_file.name}")
 
 
 def convert_all_pdfs():
-
     project_folder = Path(__file__).parent
 
     source_folder = project_folder / "source_pdfs"
@@ -129,15 +87,7 @@ def convert_all_pdfs():
         return
 
     for pdf_file in pdf_files:
-
-        print(f"Converting: {pdf_file.name}")
-
-        create_okf_file(
-            pdf_file,
-            okf_folder
-        )
-
-    print("\nPDF to OKF conversion completed.")
+        create_okf_file(pdf_file, okf_folder)
 
 
 if __name__ == "__main__":

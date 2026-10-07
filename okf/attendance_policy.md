@@ -1,29 +1,39 @@
 ---
 type: Policy
 title: Employee Attendance Policy
-description: Company policy for employee attendance policy under the HR department.
-resource: /source_pdfs/attendance_policy.pdf
+department: Human Resources
+version: 1.2
 tags:
   - attendance
   - working hours
-  - HR
+  - late arrival
   - office
-version: "1.0"
+  - absence
 status: stable
-sources:
-  - id: source-document
-    resource: /source_pdfs/attendance_policy.pdf
-    title: Employee Attendance Policy
+source: /source_pdfs/attendance_policy.pdf
 ---
 
-# Employee Attendance Policy
-
-1. Employees are expected to follow the working hours defined for their project or team.
-2. Employees should record attendance using the approved attendance system.
-3. Unexpected absence should be communicated to the manager as soon as possible.
-4. Repeated attendance issues may require a discussion with the manager.
-5. Remote employees must follow their team's working-hour requirements.
-6. Employees should attend required meetings during scheduled hours.
-7. Planned absence should be communicated in advance whenever possible.
-8. Managers are responsible for addressing attendance concerns consistently.
-9. Attendance records should be kept accurate and updated.
+Purpose
+This policy establishes normal working hours, attendance recording requirements, and the process for
+reporting lateness or absence.
+Working Hours
+Standard working hours are 9:00 AM to 6:00 PM from Monday to Friday, including a one-hour lunch break.
+Individual teams may have approved schedules that differ from these hours.
+Attendance Recording
+Employees must record their attendance through the company attendance system. Attendance records
+should reflect actual working days and approved leave or remote-work arrangements.
+Late Arrival
+Employees who expect to arrive more than 30 minutes late should inform their reporting manager as early as
+possible. Repeated unexplained lateness may be reviewed by the manager.
+Early Departure
+Employees who need to leave during working hours should inform their manager and follow the applicable
+attendance process.
+Unplanned Absence
+Unexpected absence should be reported to the reporting manager as soon as possible. The employee should
+provide an expected return date when it is known.
+Meetings
+Employees are expected to attend scheduled meetings during their working hours unless they have a valid
+reason or prior approval for absence.
+Attendance Records
+Employees should check their attendance records regularly and report incorrect entries through the
+appropriate support process.

@@ -1,146 +1,102 @@
-import re
-from pathlib import Path
+import os
+import pickle
+import faiss
 
 from catalog import build_catalog
+from embedder import create_embedding
+from config import INDEX_FILE, CATALOG_FILE
 
 
-def get_keywords(question):
-    words = re.findall(r"[a-zA-Z]+", question.lower())
 
-    stop_words = {
-        "what",
-        "is",
-        "the",
-        "a",
-        "an",
-        "how",
-        "many",
-        "can",
-        "i",
-        "do",
-        "does",
-        "are",
-        "for",
-        "to",
-        "of",
-        "and",
-        "in",
-        "on",
-        "my",
-        "me",
-        "tell",
-        "about"
-    }
-
-    keywords = []
-
-    for word in words:
-        if word not in stop_words:
-            keywords.append(word)
-
-    return keywords
-
-
-def calculate_score(question, concept):
-    keywords = get_keywords(question)
-
-    title = concept["title"].lower()
-    description = concept["description"].lower()
-
-    tags = []
-
-    for tag in concept["tags"]:
-        tags.append(tag.lower())
-
-    score = 0
-
-    for keyword in keywords:
-
-        if keyword in title:
-            score += 3
-
-        if keyword in description:
-            score += 2
-
-        for tag in tags:
-            if keyword in tag:
-                score += 2
-
-    return score
-
-
-def find_best_concept(question, catalog):
-
-    best_concept = None
-    best_score = 0
+def build_index(catalog, model):
+    embeddings = []
 
     for concept in catalog:
 
-        score = calculate_score(
-            question,
-            concept
+        text = (
+            concept["title"]
+            + " "
+            + concept["department"]
+            + " "
+            + " ".join(concept["tags"])
         )
 
-        if concept["status"] == "deprecated":
-            score -= 2
+        embedding = create_embedding(text, model)
+        embeddings.append(embedding)
 
-        if score > best_score:
-            best_score = score
-            best_concept = concept
+    dimension = len(embeddings[0])
 
-    return best_concept, best_score
+    index = faiss.IndexFlatL2(dimension)
+
+    for embedding in embeddings:
+        index.add(embedding.reshape(1, -1))
+
+    os.makedirs("index", exist_ok=True)
+
+    faiss.write_index(index, INDEX_FILE)
+
+    with open(CATALOG_FILE, "wb") as file:
+        pickle.dump(catalog, file)
+
+    return index
 
 
-def load_concept(concept):
+def load_index():
+    index = faiss.read_index(INDEX_FILE)
 
-    file_path = Path(concept["file_path"])
+    with open(CATALOG_FILE, "rb") as file:
+        catalog = pickle.load(file)
 
-    with open(file_path, "r", encoding="utf-8") as file:
-        content = file.read()
-
-    return content
+    return index, catalog
 
 
-def retrieve_knowledge(question):
+def retrieve_knowledge(question, model):
+    if os.path.exists(INDEX_FILE) and os.path.exists(CATALOG_FILE):
+        index, catalog = load_index()
+    else:
+        catalog = build_catalog()
+        index = build_index(catalog, model)
 
-    catalog = build_catalog()
+    question_embedding = create_embedding(question, model)
 
-    concept, score = find_best_concept(
-        question,
-        catalog
+    distances, positions = index.search(
+        question_embedding.reshape(1, -1),
+        1
     )
 
-    if concept is None or score == 0:
+    position = positions[0][0]
+
+    if position == -1:
         return None
 
-    knowledge = load_concept(concept)
+    concept = catalog[position]
+
+    with open(concept["file_path"], "r", encoding="utf-8") as file:
+        knowledge = file.read()
 
     return {
         "concept": concept,
-        "score": score,
+        "score": distances[0][0],
         "knowledge": knowledge
     }
 
 
 if __name__ == "__main__":
+    from embedder import load_model
+
+    model = load_model()
 
     question = input("Ask a question: ")
 
-    result = retrieve_knowledge(question)
+    result = retrieve_knowledge(question, model)
 
     if result is None:
-
         print("No matching knowledge found.")
-
     else:
-
         print("\nSelected Concept:")
         print(result["concept"]["title"])
 
-        print("\nStatus:")
-        print(result["concept"]["status"])
-
-        print("\nScore:")
+        print("\nDistance:")
         print(result["score"])
 
         print("\nKnowledge:")
