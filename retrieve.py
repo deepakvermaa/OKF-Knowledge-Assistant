@@ -1,18 +1,17 @@
 import os
 import pickle
 import faiss
+from pathlib import Path
 
 from catalog import build_catalog
 from embedder import create_embedding
 from config import INDEX_FILE, CATALOG_FILE
 
 
-
 def build_index(catalog, model):
     embeddings = []
 
     for concept in catalog:
-
         text = (
             concept["title"]
             + " "
@@ -31,27 +30,43 @@ def build_index(catalog, model):
     for embedding in embeddings:
         index.add(embedding.reshape(1, -1))
 
-    os.makedirs("index", exist_ok=True)
+    project_folder = Path(__file__).parent
+    index_folder = project_folder / "index"
 
-    faiss.write_index(index, INDEX_FILE)
+    index_folder.mkdir(exist_ok=True)
 
-    with open(CATALOG_FILE, "wb") as file:
+    index_path = project_folder / INDEX_FILE
+    catalog_path = project_folder / CATALOG_FILE
+
+    faiss.write_index(index, str(index_path))
+
+    with open(catalog_path, "wb") as file:
         pickle.dump(catalog, file)
 
     return index
 
 
 def load_index():
-    index = faiss.read_index(INDEX_FILE)
+    project_folder = Path(__file__).parent
 
-    with open(CATALOG_FILE, "rb") as file:
+    index_path = project_folder / INDEX_FILE
+    catalog_path = project_folder / CATALOG_FILE
+
+    index = faiss.read_index(str(index_path))
+
+    with open(catalog_path, "rb") as file:
         catalog = pickle.load(file)
 
     return index, catalog
 
 
 def retrieve_knowledge(question, model):
-    if os.path.exists(INDEX_FILE) and os.path.exists(CATALOG_FILE):
+    project_folder = Path(__file__).parent
+
+    index_path = project_folder / INDEX_FILE
+    catalog_path = project_folder / CATALOG_FILE
+
+    if index_path.exists() and catalog_path.exists():
         index, catalog = load_index()
     else:
         catalog = build_catalog()
@@ -71,7 +86,9 @@ def retrieve_knowledge(question, model):
 
     concept = catalog[position]
 
-    with open(concept["file_path"], "r", encoding="utf-8") as file:
+    file_path = project_folder / concept["file_path"]
+
+    with open(file_path, "r", encoding="utf-8") as file:
         knowledge = file.read()
 
     return {

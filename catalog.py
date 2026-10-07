@@ -17,7 +17,8 @@ def read_metadata(file_path):
 
 
 def build_catalog():
-    okf_folder = Path(__file__).parent / "okf"
+    project_folder = Path(__file__).parent
+    okf_folder = project_folder / "okf"
 
     catalog = []
 
@@ -27,7 +28,7 @@ def build_catalog():
         if metadata is None:
             continue
 
-        metadata["file_path"] = str(file_path)
+        metadata["file_path"] = f"okf/{file_path.name}"
         catalog.append(metadata)
 
     return catalog
