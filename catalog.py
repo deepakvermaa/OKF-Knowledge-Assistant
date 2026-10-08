@@ -1,4 +1,3 @@
-from pathlib import Path
 import yaml
 
 
@@ -11,39 +10,4 @@ def read_metadata(file_path):
     if len(parts) < 3:
         return None
 
-    metadata = yaml.safe_load(parts[1])
-
-    return metadata
-
-
-def build_catalog():
-    project_folder = Path(__file__).parent
-    okf_folder = project_folder / "okf"
-
-    catalog = []
-
-    for file_path in okf_folder.glob("*.md"):
-        metadata = read_metadata(file_path)
-
-        if metadata is None:
-            continue
-
-        metadata["file_path"] = f"okf/{file_path.name}"
-        catalog.append(metadata)
-
-    return catalog
-
-
-if __name__ == "__main__":
-    catalog = build_catalog()
-
-    print("Knowledge Catalog")
-    print("-----------------")
-
-    for concept in catalog:
-        print()
-        print("Title:", concept["title"])
-        print("Department:", concept["department"])
-        print("Tags:", concept["tags"])
-        print("Status:", concept["status"])
-        print("File:", concept["file_path"])
+    return yaml.safe_load(parts[1])

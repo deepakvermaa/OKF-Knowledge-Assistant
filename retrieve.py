@@ -1,27 +1,37 @@
-import os
 import pickle
 import faiss
 from pathlib import Path
 
-from catalog import build_catalog
+from catalog import read_metadata
 from embedder import create_embedding
-from config import INDEX_FILE, CATALOG_FILE
+from config import INDEX_FILE, FILE_LIST
 
 
-def build_index(catalog, model):
+def build_index(model):
+    project_folder = Path(__file__).parent
+    okf_folder = project_folder / "okf"
+
     embeddings = []
+    file_paths = []
 
-    for concept in catalog:
+    for file_path in okf_folder.glob("*.md"):
+        metadata = read_metadata(file_path)
+
+        if metadata is None:
+            continue
+
         text = (
-            concept["title"]
+            metadata["title"]
             + " "
-            + concept["department"]
+            + metadata["department"]
             + " "
-            + " ".join(concept["tags"])
+            + " ".join(metadata["tags"])
         )
 
         embedding = create_embedding(text, model)
+
         embeddings.append(embedding)
+        file_paths.append(f"okf/{file_path.name}")
 
     dimension = len(embeddings[0])
 
@@ -30,47 +40,68 @@ def build_index(catalog, model):
     for embedding in embeddings:
         index.add(embedding.reshape(1, -1))
 
-    project_folder = Path(__file__).parent
     index_folder = project_folder / "index"
-
     index_folder.mkdir(exist_ok=True)
 
     index_path = project_folder / INDEX_FILE
-    catalog_path = project_folder / CATALOG_FILE
+    file_list_path = project_folder / FILE_LIST
 
     faiss.write_index(index, str(index_path))
 
-    with open(catalog_path, "wb") as file:
-        pickle.dump(catalog, file)
+    with open(file_list_path, "w", encoding="utf-8") as file:
+        for path in file_paths:
+            file.write(path + "\n")
 
-    return index
+    return index, file_paths
 
 
 def load_index():
     project_folder = Path(__file__).parent
 
     index_path = project_folder / INDEX_FILE
-    catalog_path = project_folder / CATALOG_FILE
+    file_list_path = project_folder / FILE_LIST
 
     index = faiss.read_index(str(index_path))
 
-    with open(catalog_path, "rb") as file:
-        catalog = pickle.load(file)
+    with open(file_list_path, "r", encoding="utf-8") as file:
+        file_paths = [line.strip() for line in file]
 
-    return index, catalog
+    return index, file_paths
+
+
+def split_into_chunks(text, chunk_size=400, overlap=80):
+    chunks = []
+
+    start = 0
+
+    while start < len(text):
+        end = start + chunk_size
+        chunks.append(text[start:end])
+
+        start = end - overlap
+
+    return chunks
+
+
+def get_content(text):
+    parts = text.split("---", 2)
+
+    if len(parts) == 3:
+        return parts[2].strip()
+
+    return text.strip()
 
 
 def retrieve_knowledge(question, model):
     project_folder = Path(__file__).parent
 
     index_path = project_folder / INDEX_FILE
-    catalog_path = project_folder / CATALOG_FILE
+    file_list_path = project_folder / FILE_LIST
 
-    if index_path.exists() and catalog_path.exists():
-        index, catalog = load_index()
+    if index_path.exists() and file_list_path.exists():
+        index, file_paths = load_index()
     else:
-        catalog = build_catalog()
-        index = build_index(catalog, model)
+        index, file_paths = build_index(model)
 
     question_embedding = create_embedding(question, model)
 
@@ -84,15 +115,50 @@ def retrieve_knowledge(question, model):
     if position == -1:
         return None
 
-    concept = catalog[position]
+    selected_file = project_folder / file_paths[position]
 
-    file_path = project_folder / concept["file_path"]
+    metadata = read_metadata(selected_file)
 
-    with open(file_path, "r", encoding="utf-8") as file:
+    with open(selected_file, "r", encoding="utf-8") as file:
         knowledge = file.read()
 
+    content = get_content(knowledge)
+
+    chunks = split_into_chunks(
+        content,
+        chunk_size=400,
+        overlap=80
+    )
+
+    chunk_embeddings = []
+
+    for chunk in chunks:
+        embedding = create_embedding(chunk, model)
+        chunk_embeddings.append(embedding)
+
+    dimension = len(chunk_embeddings[0])
+
+    chunk_index = faiss.IndexFlatL2(dimension)
+
+    for embedding in chunk_embeddings:
+        chunk_index.add(embedding.reshape(1, -1))
+
+    top_k = min(2, len(chunks))
+
+    chunk_distances, chunk_positions = chunk_index.search(
+        question_embedding.reshape(1, -1),
+        top_k
+    )
+
+    relevant_chunks = []
+
+    for position in chunk_positions[0]:
+        relevant_chunks.append(chunks[position])
+
+    knowledge = "\n\n".join(relevant_chunks)
+
     return {
-        "concept": concept,
+        "concept": metadata,
         "score": distances[0][0],
         "knowledge": knowledge
     }
@@ -116,5 +182,5 @@ if __name__ == "__main__":
         print("\nDistance:")
         print(result["score"])
 
-        print("\nKnowledge:")
+        print("\nRelevant Knowledge:")
         print(result["knowledge"])
